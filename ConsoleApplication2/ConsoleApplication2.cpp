@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 using namespace std;
+using namespace sf;
 
 // 게임 상태 열거형
 enum class GameState {
@@ -11,7 +12,7 @@ enum class GameState {
 };
 
 enum class NoteColor {
-    Red, Blue
+    Red, Blue, Yello
 };
 
 class Note {
@@ -61,12 +62,52 @@ public:
 
 };
 
+class HitEffect {
+public:
+    sf::Sprite sprite;
+    sf::Texture texture;
+    bool active;
+    float duration;
+
+    HitEffect() : active(false), duration(0.01f) { // 지속 시간 0.1초
+        if (!texture.loadFromFile("images/great.png")) { // 여기에 변환된 이미지 파일 경로를 입력
+            // 이미지 로딩 실패 처리
+            std::cerr << "Unable to load hit effect texture!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        sprite.setTexture(texture);
+    }
+
+    void activate(sf::Vector2f position) {
+        sprite.setPosition(position);
+        active = true;
+    }
+
+    void update(float deltaTime) {
+        if (active) {
+            duration -= deltaTime;
+            if (duration <= 0) {
+                active = false;
+                duration = 0.01f;
+            }
+        }
+    }
+
+    void draw(sf::RenderWindow& window) {
+        if (active) {
+            window.draw(sprite);
+        }
+    }
+};
+
 int main() {
     // 윈도우 설정
     sf::RenderWindow window(sf::VideoMode(720, 405), "Rhythm Game");
     sf::Clock clock;
 
     int score = 0;
+
+    HitEffect hitEffect; // 임펙트 객체
 
     // 게임 상태 초기화
     GameState gameState = GameState::MainMenu;
@@ -82,7 +123,7 @@ int main() {
 
     // 게임 시작 버튼 텍스처 및 스프라이트 로드
     sf::Texture gameStartButtonTexture;
-    if (!gameStartButtonTexture.loadFromFile("images/game_start_button.jpg")) {
+    if (!gameStartButtonTexture.loadFromFile("images/start.png")) {
         cerr << "Game start button loading failed!" << endl;
         return -1;
     }
@@ -103,7 +144,7 @@ int main() {
 
     // 북 이미지의 텍스처 로드
     sf::Texture drumTexture;
-    if (!drumTexture.loadFromFile("images/red.png")) {
+    if (!drumTexture.loadFromFile("images/판정.png")) {
         std::cerr << "Drum image loading failed!" << std::endl;
         return -1;
     }
@@ -111,7 +152,7 @@ int main() {
     // 북 스프라이트 설정
     sf::Sprite drumSprite;
     drumSprite.setTexture(drumTexture);
-    drumSprite.setPosition(150, 165); // 북 이미지를 배치할 위치 설정
+    drumSprite.setPosition(195, 165); // 북 이미지를 배치할 위치 설정
 
     //노트 효과음 
     sf::SoundBuffer hitSoundBuffer;
@@ -209,9 +250,11 @@ int main() {
         sf::Time elapsed = clock.restart();
         float deltaTime = elapsed.asSeconds();
 
+
         for (auto& note : notes) {
             note.update(deltaTime);
         }
+
 
         // 게임 상태에 따른 업데이트 및 렌더링
         window.clear();
@@ -223,28 +266,35 @@ int main() {
             sf::Time elapsed = clock.restart();
             float deltaTime = elapsed.asSeconds();
 
+            hitEffect.update(deltaTime); // 임펙트 업데이트
+
             //노트 업데이트
             for (auto& note : notes) {
                 note.update(deltaTime);
             }
 
-            //키 입력 처리 및 노트 렌더링
+            // 키 입력 처리
+            NoteColor keyPressedColor = NoteColor::Red; // 기본값으로 Red 설정
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::F) || sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+                keyPressedColor = NoteColor::Red; // 빨간 키가 눌렸다고 가정
                 for (auto& note : notes) {
-                    if (note.isActiveNote() && note.color == NoteColor::Red &&
-                        note.isAtPosition(drumSprite.getPosition().x, NoteColor::Red, hitSound)) {
+                    if (note.isActiveNote() && note.color == keyPressedColor &&
+                        note.isAtPosition(drumSprite.getPosition().x, keyPressedColor, hitSound)) {
                         score += 10;
                         cout << "Score: " << score << endl;
+                        hitEffect.activate(note.sprite.getPosition() - sf::Vector2f(note.sprite.getGlobalBounds().width / 1.2, note.sprite.getGlobalBounds().height / 1.2)); // 임팩트 활성화 위치를 노트 중앙으로 조정
                         break;
                     }
                 }
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) || sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
+                keyPressedColor = NoteColor::Blue; // 파란 키가 눌렸다고 가정
                 for (auto& note : notes) {
-                    if (note.isActiveNote() && note.color == NoteColor::Blue &&
-                        note.isAtPosition(drumSprite.getPosition().x, NoteColor::Blue, hitSound)) {
+                    if (note.isActiveNote() && note.color == keyPressedColor &&
+                        note.isAtPosition(drumSprite.getPosition().x, keyPressedColor, hitSound)) {
                         score += 10;
                         cout << "Score: " << score << endl;
+                        hitEffect.activate(note.sprite.getPosition() - sf::Vector2f(note.sprite.getGlobalBounds().width / 1.2, note.sprite.getGlobalBounds().height / 1.2)); // 임팩트 활성화 위치를 노트 중앙으로 조정
                         break;
                     }
                 }
@@ -262,6 +312,8 @@ int main() {
                     window.draw(note.sprite);
                 }
             }
+
+            hitEffect.draw(window); // 임펙트 렌더링
         }
         window.display();
     }
