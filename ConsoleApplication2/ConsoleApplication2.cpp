@@ -1,4 +1,4 @@
-﻿#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <vector>
 #include <iostream>
@@ -8,7 +8,8 @@ using namespace sf;
 // 게임 상태 열거형
 enum class GameState {
     MainMenu,
-    InGame
+    InGame,
+    GameOver
 };
 
 enum class NoteColor {
@@ -31,7 +32,7 @@ public:
     // 노트를 움직입니다.
     void update(float delta) {
         if (isActive) {
-            x -= 200.0f * delta; // 노트 속도 조절
+            x -= 5000.0f * delta; // 노트 속도 조절
             sprite.setPosition(x, y);
         }
     }
@@ -151,9 +152,61 @@ public:
     }
 };
 
+class GameOverScreen {
+public:
+    sf::Sprite backgroundSprite;
+    sf::Texture backgroundTexture;
+    sf::Sprite exitButtonSprite;
+    sf::Texture exitButtonTexture;
+    ScoreGrade finalScoreGrade;
+    sf::Text scoreText;
+    sf::Font font;
+
+    GameOverScreen() {
+        if (!backgroundTexture.loadFromFile("images/end_menu.jpg")) {
+            std::cerr << "Unable to load game over background texture!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        backgroundSprite.setTexture(backgroundTexture);
+
+        if (!exitButtonTexture.loadFromFile("images/end.png")) {
+            std::cerr << "Unable to load exit button texture!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        exitButtonSprite.setTexture(exitButtonTexture);
+        exitButtonSprite.setPosition(330, 300); // 위치 조정
+
+        // 폰트 로드
+        if (!font.loadFromFile("fonts/NanumSquareNeo-Variable.ttf")) {
+            std::cerr << "Unable to load font!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        // 점수 텍스트 설정
+        scoreText.setFont(font);
+        scoreText.setCharacterSize(35);
+        scoreText.setFillColor(sf::Color::Black);
+        scoreText.setPosition(300, 100); // 점수 텍스트의 위치 설정
+    }
+
+    void draw(sf::RenderWindow& window, int score) {
+        window.draw(backgroundSprite);
+        finalScoreGrade.update(score);
+        finalScoreGrade.draw(window);
+        window.draw(exitButtonSprite);
+        setScore(score); // 점수 업데이트
+        window.draw(scoreText); // 점수 텍스트 렌더링
+    }
+
+    void setScore(int score) {
+        scoreText.setString("score : " + std::to_string(score));
+    }
+
+};
+
 int main() {
     // 윈도우 설정
-    sf::RenderWindow window(sf::VideoMode(720, 405), "Rhythm Game");
+    sf::RenderWindow window(sf::VideoMode(720, 405), "taegoui darin mojak");
     sf::Clock clock;
 
     int score = 0;
@@ -161,6 +214,12 @@ int main() {
     HitEffect hitEffect; // 임펙트 객체
 
     ScoreGrade scoreGrade; // 점수 등급 객체 생성
+
+    GameOverScreen gameOverScreen; // 최종 화면
+
+    sf::Time gameTimeLimit = sf::seconds(20.0f); // 게임 시간을 10초로 설정
+    sf::Time elapsedTime = sf::Time::Zero;
+
 
     // 게임 상태 초기화
     GameState gameState = GameState::MainMenu;
@@ -182,11 +241,21 @@ int main() {
     }
     sf::Sprite gameStartButtonSprite;
     gameStartButtonSprite.setTexture(gameStartButtonTexture);
-    gameStartButtonSprite.setPosition(300, 300); // 버튼 위치 조정
+    gameStartButtonSprite.setPosition(330, 300); // 버튼 위치 조정
+
+    // 메인 화면 종료 버튼 설정
+    sf::Sprite endButtonSprite; // 메인 화면의 종료 버튼
+    sf::Texture endButtonTexture;
+    if (!endButtonTexture.loadFromFile("images/end.png")) {
+        cerr << "End button loading failed!" << endl;
+        return -1;
+    }
+    endButtonSprite.setTexture(endButtonTexture);
+    endButtonSprite.setPosition(330, 360); // 버튼 위치 조정
 
     // 배경 텍스처 로드
     sf::Texture backgroundTexture;
-    if (!backgroundTexture.loadFromFile("images/배경.jpg")) {
+    if (!backgroundTexture.loadFromFile("images/game_background.jpg")) {
         std::cerr << "Background loading failed!" << std::endl;
         return -1;
     }
@@ -197,7 +266,7 @@ int main() {
 
     // 북 이미지의 텍스처 로드
     sf::Texture drumTexture;
-    if (!drumTexture.loadFromFile("images/판정.png")) {
+    if (!drumTexture.loadFromFile("images/judgment_line.png")) {
         std::cerr << "Drum image loading failed!" << std::endl;
         return -1;
     }
@@ -250,6 +319,7 @@ int main() {
                     gameStartButtonSprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
                     gameState = GameState::InGame;
                     music.play(); // 음악 재생
+                    elapsedTime = sf::Time::Zero; // 게임 시간 초기화
 
                     //게임 시작 시 노트 생성
 
@@ -297,8 +367,22 @@ int main() {
                     notes.emplace_back(blueNoteTexture, 4600.0f, 165.0f, NoteColor::Blue);
                     notes.emplace_back(redNoteTexture, 4700.0f, 165.0f, NoteColor::Red);
                 }
+                else if (endButtonSprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    window.close(); // 메인 화면 종료 버튼 클릭 시 프로그램 종료
+                }
+                else if (gameState == GameState::GameOver) {
+                    // 메인 메뉴에서 종료 버튼 클릭 처리
+                    if (event.type == sf::Event::MouseButtonPressed) {
+                        // 최종 화면에서 종료 버튼 클릭 처리
+                        if (gameOverScreen.exitButtonSprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                            window.close(); // 최종 화면 종료 버튼 클릭 시 프로그램 종료
+                        }
+                    }
+                }
             }
         }
+
+        elapsedTime += clock.restart();
 
         sf::Time elapsed = clock.restart();
         float deltaTime = elapsed.asSeconds();
@@ -314,6 +398,7 @@ int main() {
         if (gameState == GameState::MainMenu) {
             window.draw(mainMenuSprite);
             window.draw(gameStartButtonSprite);
+            window.draw(endButtonSprite); // 메인 화면 종료 버튼
         }
         else if (gameState == GameState::InGame) {
             sf::Time elapsed = clock.restart();
@@ -362,6 +447,11 @@ int main() {
                 }
             }
 
+            if (elapsedTime >= gameTimeLimit) {
+                gameState = GameState::GameOver;
+                music.stop(); // 음악 종료
+            }
+
             // 배경 렌더링
             window.draw(backgroundSprite);
 
@@ -379,6 +469,9 @@ int main() {
             scoreGrade.draw(window);  // 점수 등급 렌더링
 
             hitEffect.draw(window); // 임펙트 렌더링
+        }
+        else if (gameState == GameState::GameOver) {
+            gameOverScreen.draw(window, score);
         }
         window.display();
     }
