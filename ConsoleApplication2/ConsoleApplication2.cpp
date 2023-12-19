@@ -60,26 +60,41 @@ public:
         return false;
     }
 
+    // 노트가 x축 위치 100을 넘었는지 확인합니다.
+    bool passedJudgementLine() {
+        return x < 100.0f && isActive;
+    }
 };
 
 class HitEffect {
 public:
     sf::Sprite sprite;
     sf::Texture texture;
+    Texture comboBreakTexture;
     bool active;
     float duration;
 
-    HitEffect() : active(false), duration(0.01f) { // 지속 시간 0.1초
-        if (!texture.loadFromFile("images/great.png")) { // 여기에 변환된 이미지 파일 경로를 입력
-            // 이미지 로딩 실패 처리
+    HitEffect() : active(false), duration(0.01f) {
+        if (!texture.loadFromFile("images/great.png")) {
             std::cerr << "Unable to load hit effect texture!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        if (!comboBreakTexture.loadFromFile("images/combobreak.png")) {
+            std::cerr << "Unable to load combo break texture!" << std::endl;
             exit(EXIT_FAILURE);
         }
         sprite.setTexture(texture);
     }
 
-    void activate(sf::Vector2f position) {
+    void activate(sf::Vector2f position, bool comboBreak = false) {
         sprite.setPosition(position);
+        if (comboBreak) {
+            sprite.setTexture(comboBreakTexture);
+            duration = 0.01f; // 콤보 브레이크 이미지가 표시될 시간
+        }
+        else {
+            sprite.setTexture(texture);
+        }
         active = true;
     }
 
@@ -203,37 +218,37 @@ int main() {
                     notes.clear();// 이전 노트들 제거
 
                     // (색상, 나오는 시간, 높이 )
-                    notes.emplace_back(redNoteTexture, 800.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 900.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 1000.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(redNoteTexture, 1100.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 1200.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(blueNoteTexture, 1300.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 1400.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 1500.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(blueNoteTexture, 1600.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 1700.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(redNoteTexture, 1800.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 1900.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 2000.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(redNoteTexture, 2100.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 2200.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(blueNoteTexture, 2300.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 2400.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 2500.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(blueNoteTexture, 2600.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 2700.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(redNoteTexture, 2800.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 2900.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 3000.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(redNoteTexture, 3100.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 3200.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(blueNoteTexture, 3300.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 3400.0f, 165.0f, NoteColor::Red); 
-                    notes.emplace_back(blueNoteTexture, 3500.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(blueNoteTexture, 3600.0f, 165.0f, NoteColor::Blue); 
-                    notes.emplace_back(redNoteTexture, 3700.0f, 165.0f, NoteColor::Red);  
-                    notes.emplace_back(redNoteTexture, 3800.0f, 165.0f, NoteColor::Red); 
+                    notes.emplace_back(redNoteTexture, 800.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 900.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 1000.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(redNoteTexture, 1100.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 1200.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(blueNoteTexture, 1300.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 1400.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 1500.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(blueNoteTexture, 1600.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 1700.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(redNoteTexture, 1800.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 1900.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 2000.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(redNoteTexture, 2100.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 2200.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(blueNoteTexture, 2300.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 2400.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 2500.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(blueNoteTexture, 2600.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 2700.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(redNoteTexture, 2800.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 2900.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 3000.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(redNoteTexture, 3100.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 3200.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(blueNoteTexture, 3300.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 3400.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(blueNoteTexture, 3500.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(blueNoteTexture, 3600.0f, 165.0f, NoteColor::Blue);
+                    notes.emplace_back(redNoteTexture, 3700.0f, 165.0f, NoteColor::Red);
+                    notes.emplace_back(redNoteTexture, 3800.0f, 165.0f, NoteColor::Red);
                     notes.emplace_back(blueNoteTexture, 3900.0f, 165.0f, NoteColor::Blue);
                     notes.emplace_back(redNoteTexture, 4000.0f, 165.0f, NoteColor::Red);
                     notes.emplace_back(redNoteTexture, 4100.0f, 165.0f, NoteColor::Red);
@@ -268,9 +283,18 @@ int main() {
 
             hitEffect.update(deltaTime); // 임펙트 업데이트
 
-            //노트 업데이트
+            // 노트 업데이트 및 판정선 넘기 확인
             for (auto& note : notes) {
                 note.update(deltaTime);
+                if (note.passedJudgementLine()) {
+                    if (note.isActiveNote()) {
+                        score -= 5;
+                        cout << "Score: " << score << endl;
+                        note.isActive = false;
+                        // 콤보 브레이크 이미지 활성화
+                        hitEffect.activate(sf::Vector2f(160, 80), true); // 위치는 예시, 필요에 따라 조정
+                    }
+                }
             }
 
             // 키 입력 처리
