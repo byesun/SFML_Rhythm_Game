@@ -115,6 +115,42 @@ public:
     }
 };
 
+class ScoreGrade {
+public:
+    sf::Sprite sprite;
+    sf::Texture sTexture, aTexture, bTexture, fTexture;
+
+    ScoreGrade() {
+        if (!sTexture.loadFromFile("images/S.png") ||
+            !aTexture.loadFromFile("images/A.png") ||
+            !bTexture.loadFromFile("images/B.png") ||
+            !fTexture.loadFromFile("images/F.png")) {
+            std::cerr << "Unable to load grade textures!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    void update(int score) {
+        if (score < 100) {
+            sprite.setTexture(fTexture);
+        }
+        else if (score < 200) {
+            sprite.setTexture(bTexture);
+        }
+        else if (score < 300) {
+            sprite.setTexture(aTexture);
+        }
+        else {
+            sprite.setTexture(sTexture);
+        }
+        sprite.setPosition(600, 280); // 점수 등급 이미지의 위치 설정
+    }
+
+    void draw(sf::RenderWindow& window) {
+        window.draw(sprite);
+    }
+};
+
 int main() {
     // 윈도우 설정
     sf::RenderWindow window(sf::VideoMode(720, 405), "Rhythm Game");
@@ -123,6 +159,8 @@ int main() {
     int score = 0;
 
     HitEffect hitEffect; // 임펙트 객체
+
+    ScoreGrade scoreGrade; // 점수 등급 객체 생성
 
     // 게임 상태 초기화
     GameState gameState = GameState::MainMenu;
@@ -336,6 +374,9 @@ int main() {
                     window.draw(note.sprite);
                 }
             }
+
+            scoreGrade.update(score); // 점수 등급 업데이트
+            scoreGrade.draw(window);  // 점수 등급 렌더링
 
             hitEffect.draw(window); // 임펙트 렌더링
         }
