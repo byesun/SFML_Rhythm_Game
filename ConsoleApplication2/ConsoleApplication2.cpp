@@ -29,7 +29,7 @@ public:
         sprite.setPosition(x, y);
     }
 
-    // 노트를 움직입니다.
+    // 노트를 움직임 설정
     void update(float delta) {
         if (isActive) {
             x -= 300.0f * delta; // 노트 속도 조절
@@ -37,12 +37,12 @@ public:
         }
     }
 
-    // 노트가 활성 상태인지 확인합니다.
+    // 노트가 활성 상태 확인
     bool isActiveNote() const {
         return isActive;
     }
 
-    // 노트가 클릭된 지점에 있는지 확인합니다.
+    // 노트가 클릭된 지점 위치
     bool isAtPosition(float positionX, NoteColor keyPressedColor) {
         if (isActive && color == keyPressedColor && x < positionX + 50.0f && x > positionX - 50.0f) {
             isActive = false; // 노트 비활성화
@@ -54,14 +54,14 @@ public:
     //효과음 재생
     bool isAtPosition(float positionX, NoteColor keyPressedColor, Sound& hitSound) {
         if (isActive && color == keyPressedColor && x < positionX + 50.0f && x > positionX - 50.0f) {
-            isActive = false; // 노트 비활성화
+            isActive = false;
             hitSound.play();  // 효과음 재생
             return true;
         }
         return false;
     }
 
-    // 노트가 x축 위치 100을 넘었는지 확인합니다.
+    // 노트가 x축 위치 100을 확인 ( 판정 )
     bool passedJudgementLine() {
         return x < 100.0f && isActive;
     }
@@ -91,7 +91,7 @@ public:
         sprite.setPosition(position);
         if (comboBreak) {
             sprite.setTexture(comboBreakTexture);
-            duration = 0.1f; // 콤보 브레이크 이미지가 표시될 시간
+            duration = 0.1f;
         }
         else {
             sprite.setTexture(texture);
@@ -144,7 +144,7 @@ public:
         else {
             sprite.setTexture(sTexture);
         }
-        sprite.setPosition(600, 280); // 점수 등급 이미지의 위치 설정
+        sprite.setPosition(600, 280); // 랭크 위치 설정
     }
 
     void draw(RenderWindow& window) {
@@ -174,7 +174,7 @@ public:
             exit(EXIT_FAILURE);
         }
         exitButtonSprite.setTexture(exitButtonTexture);
-        exitButtonSprite.setPosition(330, 300); // 위치 조정
+        exitButtonSprite.setPosition(330, 300); // 최종 화면 end 버튼 위치 설정
 
         // 폰트 로드
         if (!font.loadFromFile("fonts/NanumSquareNeo-Variable.ttf")) {
@@ -205,7 +205,7 @@ public:
 };
 
 int main() {
-    // 윈도우 설정
+    // SFML 라이브러리 윈도우 설정
     RenderWindow window(VideoMode(720, 405), "taegoui darin mojak");
     Clock clock;
 
@@ -213,11 +213,9 @@ int main() {
 
     HitEffect hitEffect; // 임펙트 객체
 
-    ScoreGrade scoreGrade; // 점수 등급 객체 생성
+    ScoreGrade scoreGrade; // 점수 등급 객체
 
     GameOverScreen gameOverScreen; // 최종 화면
-
-    //Time gameTimeLimit = seconds(20.0f); // 게임 시간을 10초로 설정
 
     Time gameTimeLimit = seconds(20.0f);
     Time elapsedTime = Time::Zero;
@@ -243,17 +241,17 @@ int main() {
     }
     Sprite gameStartButtonSprite;
     gameStartButtonSprite.setTexture(gameStartButtonTexture);
-    gameStartButtonSprite.setPosition(330, 300); // 버튼 위치 조정
+    gameStartButtonSprite.setPosition(330, 300); // game start 버튼 위치 설정
 
     // 메인 화면 종료 버튼 설정
-    Sprite endButtonSprite; // 메인 화면의 종료 버튼
+    Sprite endButtonSprite;
     Texture endButtonTexture;
     if (!endButtonTexture.loadFromFile("images/end.png")) {
         cerr << "End button loading failed!" << endl;
         return -1;
     }
     endButtonSprite.setTexture(endButtonTexture);
-    endButtonSprite.setPosition(330, 360); // 버튼 위치 조정
+    endButtonSprite.setPosition(330, 360); // 메인 화면 end버튼 위치 설정
 
     // 배경 텍스처 로드
     Texture backgroundTexture;
@@ -262,30 +260,28 @@ int main() {
         return -1;
     }
 
-    // 배경 스프라이트 설정
+    // 배경 스프라이트 
     Sprite backgroundSprite;
     backgroundSprite.setTexture(backgroundTexture);
 
-    // 북 이미지의 텍스처 로드
+    // 판정선 이미지 로드
     Texture drumTexture;
     if (!drumTexture.loadFromFile("images/judgment_line.png")) {
         cerr << "Drum image loading failed!" << endl;
         return -1;
     }
 
-    // 북 스프라이트 설정
     Sprite drumSprite;
     drumSprite.setTexture(drumTexture);
     drumSprite.setPosition(195, 165); // 북 이미지를 배치할 위치 설정
 
-    //노트 효과음 
+    //노트 효과음 설정
     SoundBuffer hitSoundBuffer;
     if (!hitSoundBuffer.loadFromFile("Audios/drumBig3.mp3")) {
         cerr << "Hit sound loading failed!" << endl;
         return -1;
     }
 
-    //노트 효과음 설정
     Sound hitSound;
     hitSound.setBuffer(hitSoundBuffer);
 
@@ -295,7 +291,7 @@ int main() {
         cerr << "Music loading failed!" << endl;
         return -1;
     }
-    music.play();
+    music.play(); //인게임 시 재생
 
     // 노트 텍스처 로드
     Texture redNoteTexture, blueNoteTexture;
@@ -320,14 +316,12 @@ int main() {
                 if (gameState == GameState::MainMenu &&
                     gameStartButtonSprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
                     gameState = GameState::InGame;
-                    music.play(); // 음악 재생
-                    elapsedTime = Time::Zero; // 게임 시간 초기화
+                    music.play();
+                    elapsedTime = Time::Zero; // 시간 초기화
 
-                    //게임 시작 시 노트 생성
+                    notes.clear();// 이전 노트들 초기화
 
-                    notes.clear();// 이전 노트들 제거
-
-                    // (색상, 나오는 시간, 높이 )
+                    //게임 시작 시 노트 생성 (색상, 나오는 시간, 높이 )
                     notes.emplace_back(redNoteTexture, 800.0f, 165.0f, NoteColor::Red);
                     notes.emplace_back(blueNoteTexture, 900.0f, 165.0f, NoteColor::Blue);
                     notes.emplace_back(redNoteTexture, 1000.0f, 165.0f, NoteColor::Red);
@@ -373,7 +367,6 @@ int main() {
                     window.close(); // 메인 화면 종료 버튼 클릭 시 프로그램 종료
                 }
                 else if (gameState == GameState::GameOver) {
-                    // 메인 메뉴에서 종료 버튼 클릭 처리
                     if (event.type == Event::MouseButtonPressed) {
                         // 최종 화면에서 종료 버튼 클릭 처리
                         if (gameOverScreen.exitButtonSprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
@@ -408,16 +401,15 @@ int main() {
                         score -= 5;
                         cout << "Score: " << score << endl;
                         note.isActive = false;
-                        // 콤보 브레이크 이미지 활성화
-                        hitEffect.activate(Vector2f(160, 80), true); // 위치는 예시, 필요에 따라 조정
+                        hitEffect.activate(Vector2f(160, 80), true);
                     }
                 }
             }
 
             // 키 입력 처리
-            NoteColor keyPressedColor = NoteColor::Red; // 기본값으로 Red 설정
+            NoteColor keyPressedColor = NoteColor::Red;
             if (Keyboard::isKeyPressed(Keyboard::F) || Keyboard::isKeyPressed(Keyboard::D)) {
-                keyPressedColor = NoteColor::Red; // 빨간 키가 눌렸다고 가정
+                keyPressedColor = NoteColor::Red; // 빨간색 노트
                 for (auto& note : notes) {
                     if (note.isActiveNote() && note.color == keyPressedColor &&
                         note.isAtPosition(drumSprite.getPosition().x, keyPressedColor, hitSound)) {
@@ -429,7 +421,7 @@ int main() {
                 }
             }
             if (Keyboard::isKeyPressed(Keyboard::J) || Keyboard::isKeyPressed(Keyboard::K)) {
-                keyPressedColor = NoteColor::Blue; // 파란 키가 눌렸다고 가정
+                keyPressedColor = NoteColor::Blue; // 파란색 노트
                 for (auto& note : notes) {
                     if (note.isActiveNote() && note.color == keyPressedColor &&
                         note.isAtPosition(drumSprite.getPosition().x, keyPressedColor, hitSound)) {
@@ -449,7 +441,7 @@ int main() {
             // 배경 렌더링
             window.draw(backgroundSprite);
 
-            // 북 이미지 렌더링
+            // 판정 이미지 렌더링
             window.draw(drumSprite);
 
             // 노트 렌더링
